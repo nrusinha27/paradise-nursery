@@ -1,58 +1,88 @@
+
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { removeItem, updateQuantity } from './CartSlice';
+import {
+  removeItem,
+  increaseItemQuantity,
+  decreaseItemQuantity
+} from './CartSlice';
 import './CartItem.css';
 
-const CartItem = ({ onContinueShopping }) => {
-  const cart = useSelector(state => state.cart.items);
+function CartItem({ onContinueShopping }) {
+  const cartItems = useSelector((state) => state.cart.items);
   const dispatch = useDispatch();
 
+  // Calculate the total price of all cart items.
   const calculateTotalAmount = () => {
-    return cart.reduce((total, item) => {
-      const costNum = parseFloat(item.cost.replace('$', ''));
-      return total + costNum * item.quantity;
+    return cartItems.reduce((total, item) => {
+      const price = Number(String(item.cost).replace(/[^0-9.]/g, '')) || 0;
+      const quantity = Number(item.quantity) || 1;
+      return total + price * quantity;
     }, 0);
   };
 
-  const handleIncrement = (item) => {
-    dispatch(updateQuantity({ name: item.name, quantity: item.quantity + 1 }));
-  };
-
-  const handleDecrement = (item) => {
-    if (item.quantity > 1) {
-      dispatch(updateQuantity({ name: item.name, quantity: item.quantity - 1 }));
-    } else {
-      dispatch(removeItem(item.name));
-    }
-  };
-
-  const handleRemove = (item) => {
-    dispatch(removeItem(item.name));
-  };
+  // Display an empty-cart message when no products are present.
+  if (!cartItems || cartItems.length === 0) {
+    return (
+      <div className="cart-container">
+        <h2>Your Shopping Cart</h2>
+        <p>Your cart is empty.</p>
+        <button onClick={onContinueShopping}>
+          Continue Shopping
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="cart-container">
-      <h2>Total Cart Amount: ${calculateTotalAmount()}</h2>
-      {cart.map(item => (
+      <h2>Your Shopping Cart</h2>
+
+      {cartItems.map((item) => (
         <div className="cart-item" key={item.name}>
-          <img className="cart-item-image" src={item.image} alt={item.name} width="100" />
-          <div className="cart-item-details">
-            <div className="cart-item-name">{item.name}</div>
-            <div className="cart-item-cost">{item.cost}</div>
-            <div className="cart-item-quantity">
-              <button onClick={() => handleDecrement(item)}>-</button>
-              <span>{item.quantity}</span>
-              <button onClick={() => handleIncrement(item)}>+</button>
-            </div>
-            <div className="cart-item-total">Subtotal: ${parseFloat(item.cost.replace('$', '')) * item.quantity}</div>
-            <button onClick={() => handleRemove(item)}>Delete</button>
+          <img src={item.image} alt={item.name} width="100" />
+
+          <div>
+            <h3>{item.name}</h3>
+            <p>Price: {item.cost}</p>
+
+            <button
+              onClick={() => dispatch(decreaseItemQuantity(item))}
+              disabled={(item.quantity || 1) <= 1}
+            >
+              −
+            </button>
+
+            <span> {item.quantity || 1} </span>
+
+            <button
+              onClick={() => dispatch(increaseItemQuantity(item))}
+            >
+              +
+            </button>
+
+            <button onClick={() => dispatch(removeItem(item))}>
+              Remove
+            </button>
           </div>
         </div>
       ))}
-      <button onClick={onContinueShopping}>Continue Shopping</button>
-      <button onClick={() => alert('Functionality to be added in future')}>Checkout</button>
+
+      <h3>
+        Total Cart Amount: ${calculateTotalAmount().toFixed(2)}
+      </h3>
+
+      <button onClick={onContinueShopping}>
+        Continue Shopping
+      </button>
+
+      <button
+        onClick={() => window.alert('Checkout functionality coming soon!')}
+      >
+        Checkout
+      </button>
     </div>
   );
-};
+}
 
 export default CartItem;
