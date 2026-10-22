@@ -1,28 +1,33 @@
 
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  removeItem,
-  increaseItemQuantity,
-  decreaseItemQuantity
-} from './CartSlice';
+import { removeItem, updateQuantity } from './CartSlice';
 import './CartItem.css';
 
 function CartItem({ onContinueShopping }) {
   const cartItems = useSelector((state) => state.cart.items);
   const dispatch = useDispatch();
 
-  // Calculate the total price of all cart items.
+  // Calculate the total using each item's price and quantity.
   const calculateTotalAmount = () => {
     return cartItems.reduce((total, item) => {
-      const price = Number(String(item.cost).replace(/[^0-9.]/g, '')) || 0;
-      const quantity = Number(item.quantity) || 1;
-      return total + price * quantity;
+      const price =
+        typeof item.cost === 'number'
+          ? item.cost
+          : parseFloat(String(item.cost).replace('$', '')) || 0;
+
+      return total + price * (Number(item.quantity) || 1);
     }, 0);
   };
 
-  // Display an empty-cart message when no products are present.
-  if (!cartItems || cartItems.length === 0) {
+  // Update quantity through the existing Redux action.
+  const changeQuantity = (item, quantity) => {
+    if (quantity >= 1) {
+      dispatch(updateQuantity({ name: item.name, quantity }));
+    }
+  };
+
+  if (cartItems.length === 0) {
     return (
       <div className="cart-container">
         <h2>Your Shopping Cart</h2>
@@ -40,35 +45,57 @@ function CartItem({ onContinueShopping }) {
 
       {cartItems.map((item) => (
         <div className="cart-item" key={item.name}>
-          <img src={item.image} alt={item.name} width="100" />
+          <img
+            className="cart-item-image"
+            src={item.image}
+            alt={item.name}
+          />
 
-          <div>
-            <h3>{item.name}</h3>
-            <p>Price: {item.cost}</p>
+          <div className="cart-item-details">
+            <h3 className="cart-item-name">{item.name}</h3>
+            <p className="cart-item-cost">Price: {item.cost}</p>
+
+            <div className="cart-item-quantity">
+              <button
+                onClick={() =>
+                  changeQuantity(item, (Number(item.quantity) || 1) - 1)
+                }
+                disabled={(Number(item.quantity) || 1) <= 1}
+                aria-label={`Decrease ${item.name} quantity`}
+              >
+                −
+              </button>
+
+              <span>{item.quantity || 1}</span>
+
+              <button
+                onClick={() =>
+                  changeQuantity(item, (Number(item.quantity) || 1) + 1)
+                }
+                aria-label={`Increase ${item.name} quantity`}
+              >
+                +
+              </button>
+            </div>
+
+            <p>
+              Item total: $
+              {(
+                (parseFloat(String(item.cost).replace('$', '')) || 0) *
+                (Number(item.quantity) || 1)
+              ).toFixed(2)}
+            </p>
 
             <button
-              onClick={() => dispatch(decreaseItemQuantity(item))}
-              disabled={(item.quantity || 1) <= 1}
+              onClick={() => dispatch(removeItem(item.name))}
             >
-              −
-            </button>
-
-            <span> {item.quantity || 1} </span>
-
-            <button
-              onClick={() => dispatch(increaseItemQuantity(item))}
-            >
-              +
-            </button>
-
-            <button onClick={() => dispatch(removeItem(item))}>
               Remove
             </button>
           </div>
         </div>
       ))}
 
-      <h3>
+      <h3 className="total-amount">
         Total Cart Amount: ${calculateTotalAmount().toFixed(2)}
       </h3>
 
