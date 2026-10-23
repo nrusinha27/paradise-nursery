@@ -1,113 +1,108 @@
 
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { removeItem, updateQuantity } from './CartSlice';
-import './CartItem.css';
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  removeItem,
+  updateQuantity,
+} from "./CartSlice";
 
-function CartItem({ onContinueShopping }) {
-  const cartItems = useSelector((state) => state.cart.items);
+function CartItem() {
+  const cart = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
-  // Calculate the total using each item's price and quantity.
+  // Calculate the total price of all cart items.
   const calculateTotalAmount = () => {
-    return cartItems.reduce((total, item) => {
-      const price =
-        typeof item.cost === 'number'
-          ? item.cost
-          : parseFloat(String(item.cost).replace('$', '')) || 0;
+    return cart.reduce((total, item) => {
+      const price = Number(item.cost) || 0;
+      const quantity = Number(item.quantity) || 0;
 
-      return total + price * (Number(item.quantity) || 1);
+      return total + price * quantity;
     }, 0);
   };
 
-  // Update quantity through the existing Redux action.
-  const changeQuantity = (item, quantity) => {
-    if (quantity >= 1) {
-      dispatch(updateQuantity({ name: item.name, quantity }));
+  const handleIncrement = (item) => {
+    dispatch(
+      updateQuantity({
+        name: item.name,
+        quantity: Number(item.quantity) + 1,
+      })
+    );
+  };
+
+  const handleDecrement = (item) => {
+    if (Number(item.quantity) > 1) {
+      dispatch(
+        updateQuantity({
+          name: item.name,
+          quantity: Number(item.quantity) - 1,
+        })
+      );
     }
   };
 
-  if (cartItems.length === 0) {
-    return (
-      <div className="cart-container">
-        <h2>Your Shopping Cart</h2>
-        <p>Your cart is empty.</p>
-        <button onClick={onContinueShopping}>
-          Continue Shopping
-        </button>
-      </div>
-    );
-  }
+  const handleRemove = (item) => {
+    dispatch(removeItem(item.name));
+  };
 
   return (
     <div className="cart-container">
-      <h2>Your Shopping Cart</h2>
+      <h1>Shopping Cart</h1>
 
-      {cartItems.map((item) => (
-        <div className="cart-item" key={item.name}>
-          <img
-            className="cart-item-image"
-            src={item.image}
-            alt={item.name}
-          />
+      {cart.length === 0 ? (
+        <p>Your cart is empty.</p>
+      ) : (
+        <>
+          {cart.map((item) => (
+            <div className="cart-item" key={item.name}>
+              <img
+                src={item.image}
+                alt={item.name}
+                width="100"
+              />
 
-          <div className="cart-item-details">
-            <h3 className="cart-item-name">{item.name}</h3>
-            <p className="cart-item-cost">Price: {item.cost}</p>
+              <div>
+                <h3>{item.name}</h3>
+                <p>
+                  Price: ${Number(item.cost).toFixed(2)}
+                </p>
 
-            <div className="cart-item-quantity">
-              <button
-                onClick={() =>
-                  changeQuantity(item, (Number(item.quantity) || 1) - 1)
-                }
-                disabled={(Number(item.quantity) || 1) <= 1}
-                aria-label={`Decrease ${item.name} quantity`}
-              >
-                −
-              </button>
+                <div>
+                  <button
+                    onClick={() => handleDecrement(item)}
+                    disabled={Number(item.quantity) <= 1}
+                  >
+                    -
+                  </button>
 
-              <span>{item.quantity || 1}</span>
+                  <span> {item.quantity} </span>
 
-              <button
-                onClick={() =>
-                  changeQuantity(item, (Number(item.quantity) || 1) + 1)
-                }
-                aria-label={`Increase ${item.name} quantity`}
-              >
-                +
-              </button>
+                  <button
+                    onClick={() => handleIncrement(item)}
+                  >
+                    +
+                  </button>
+                </div>
+
+                <p>
+                  Subtotal: $
+                  {(
+                    Number(item.cost) *
+                    Number(item.quantity)
+                  ).toFixed(2)}
+                </p>
+
+                <button onClick={() => handleRemove(item)}>
+                  Remove
+                </button>
+              </div>
             </div>
+          ))}
 
-            <p>
-              Item total: $
-              {(
-                (parseFloat(String(item.cost).replace('$', '')) || 0) *
-                (Number(item.quantity) || 1)
-              ).toFixed(2)}
-            </p>
-
-            <button
-              onClick={() => dispatch(removeItem(item.name))}
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-      ))}
-
-      <h3 className="total-amount">
-        Total Cart Amount: ${calculateTotalAmount().toFixed(2)}
-      </h3>
-
-      <button onClick={onContinueShopping}>
-        Continue Shopping
-      </button>
-
-      <button
-        onClick={() => window.alert('Checkout functionality coming soon!')}
-      >
-        Checkout
-      </button>
+          <h2>
+            Total Amount: ${calculateTotalAmount().toFixed(2)}
+          </h2>
+        </>
+      )}
     </div>
   );
 }
