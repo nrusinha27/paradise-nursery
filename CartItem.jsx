@@ -1,21 +1,17 @@
 
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  removeItem,
-  updateQuantity,
-} from "./CartSlice";
+import { removeItem, updateQuantity } from "./CartSlice";
 
 function CartItem() {
   const cart = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
-  // Calculate the total price of all cart items.
+  // Calculate the total cost of all cart items.
   const calculateTotalAmount = () => {
     return cart.reduce((total, item) => {
       const price = Number(item.cost) || 0;
       const quantity = Number(item.quantity) || 0;
-
       return total + price * quantity;
     }, 0);
   };
@@ -62,26 +58,23 @@ function CartItem() {
 
               <div>
                 <h3>{item.name}</h3>
+
                 <p>
                   Price: ${Number(item.cost).toFixed(2)}
                 </p>
 
-                <div>
-                  <button
-                    onClick={() => handleDecrement(item)}
-                    disabled={Number(item.quantity) <= 1}
-                  >
-                    -
-                  </button>
+                <button
+                  onClick={() => handleDecrement(item)}
+                  disabled={Number(item.quantity) <= 1}
+                >
+                  -
+                </button>
 
-                  <span> {item.quantity} </span>
+                <span> {item.quantity} </span>
 
-                  <button
-                    onClick={() => handleIncrement(item)}
-                  >
-                    +
-                  </button>
-                </div>
+                <button onClick={() => handleIncrement(item)}>
+                  +
+                </button>
 
                 <p>
                   Subtotal: $
@@ -99,7 +92,8 @@ function CartItem() {
           ))}
 
           <h2>
-            Total Amount: ${calculateTotalAmount().toFixed(2)}
+            Total Amount: $
+            {calculateTotalAmount().toFixed(2)}
           </h2>
         </>
       )}
